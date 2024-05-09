@@ -11,7 +11,7 @@ export class ArticlesService {
     return this.prisma.article.create({ data: createArticleDto });
   }
 
-  findAll() {
+  findPublished() {
     return this.prisma.article.findMany({ where: { published: true } });
   }
 

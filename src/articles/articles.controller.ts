@@ -10,37 +10,37 @@ import { ArticleEntity } from './entities/article.entity';
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
-  @Post('createArticle')
+  @Post('create')
   @ApiCreatedResponse({type: ArticleEntity})
   create(@Body() createArticleDto: CreateArticleDto) {
     return this.articlesService.create(createArticleDto);
   }
 
-  @Get('getPublishedArticles')
+  @Get('getPublished')
   @ApiOkResponse({type: ArticleEntity, isArray:true})
-  findAll() {
-    return this.articlesService.findAll();
+  findPublished() {
+    return this.articlesService.findPublished();
   }
 
-  @Get('getDraftedArticles')
+  @Get('getDrafts')
   @ApiOkResponse({type:ArticleEntity})
   findDrafts(){
     return this.articlesService.findDrafts();
   }
 
-  @Get(':id')
+  @Get('get/:id')
   @ApiOkResponse({type:ArticleEntity})
   findOne(@Param('id') id: string) {
     return this.articlesService.findOne(+id);
   }
 
-  @Patch('update:id')
+  @Patch('update/:id')
   @ApiOkResponse({type:ArticleEntity})
   update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articlesService.update(+id, updateArticleDto);
   }
 
-  @Delete('delete:id')
+  @Delete('delete/:id')
   @ApiOkResponse({type:ArticleEntity})
   remove(@Param('id') id: string) {
     return this.articlesService.remove(+id);
