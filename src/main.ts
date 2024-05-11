@@ -4,9 +4,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule,{
-    logger: ['warn','error'],
+    logger: ['warn','error'], 
   });
-
+  app.enableCors();
   
 
   const config = new DocumentBuilder()

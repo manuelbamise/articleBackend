@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { error } from 'console';
 
 @Injectable()
 export class ArticlesService {
@@ -11,16 +12,41 @@ export class ArticlesService {
     return this.prisma.article.create({ data: createArticleDto });
   }
 
-  findPublished() {
-    return this.prisma.article.findMany({ where: { published: true } });
+  async findPublished() {
+    var publishedArticles = await this.prisma.article.findMany({
+      where: { published: true },
+    });
+    //console.clear()
+    if (publishedArticles.length < 1) {
+      console.log('No articles found');
+      return { msg: 'No articles found', Error };
+    }
+    console.log('Articles found');
+    return publishedArticles;
   }
 
-  findDrafts() {
-    return this.prisma.article.findMany({ where: { published: false } });
+  async findDrafts() {
+    var draftedArticles = await this.prisma.article.findMany({
+      where: { published: false },
+    });
+    //console.clear()
+    if (draftedArticles.length < 1) {
+      console.log('No drafts found');
+      return { msg: 'No drafts found', Error };
+    }
+    console.log('Drafts found');
+    return draftedArticles;
   }
 
-  findOne(id: number) {
-    return this.prisma.article.findUnique({ where: { id } });
+  async findOne(id: number) {
+    var uniqueId = await this.prisma.article.findUnique({ where: { id } });
+
+    if (uniqueId.id != id) {
+      console.log('Id mismatch');
+      return {error}
+    }
+
+    return uniqueId;
   }
 
   update(id: number, updateArticleDto: UpdateArticleDto) {
@@ -31,6 +57,6 @@ export class ArticlesService {
   }
 
   remove(id: number) {
-    return this.prisma.article.delete({where:{id}});
+    return this.prisma.article.delete({ where: { id } });
   }
 }
