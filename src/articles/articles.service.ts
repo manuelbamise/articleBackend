@@ -1,62 +1,118 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpCode,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { error } from 'console';
+import { isEmpty } from 'rxjs';
 
 @Injectable()
 export class ArticlesService {
   constructor(private prisma: PrismaService) {}
 
-  create(createArticleDto: CreateArticleDto) {
-    return this.prisma.article.create({ data: createArticleDto });
+  async create(createArticleDto: CreateArticleDto, title: string) {
+    try {
+      const articlePresent = await this.prisma.article.findUnique({
+        where: { title },
+      });
+      if (!articlePresent) {
+        const newArticle = await this.prisma.article.create({
+          data: createArticleDto,
+        });
+        return newArticle;
+      }
+      throw new BadRequestException();
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   async findPublished() {
-    var publishedArticles = await this.prisma.article.findMany({
-      where: { published: true },
-    });
-    //console.clear()
-    if (publishedArticles.length < 1) {
-      console.log('No articles found');
-      return { msg: 'No articles found', Error };
+    try {
+      var publishedArticles = await this.prisma.article.findMany({
+        where: { published: true },
+      });
+      if (!publishedArticles) {
+        throw new NotFoundException();
+      }
+      console.log('Articles found');
+      return publishedArticles;
+    } catch (error) {
+      // console.log(error);
+      throw new NotFoundException(error.message);
     }
-    console.log('Articles found');
-    return publishedArticles;
   }
 
   async findDrafts() {
-    var draftedArticles = await this.prisma.article.findMany({
-      where: { published: false },
-    });
-    //console.clear()
-    if (draftedArticles.length < 1) {
-      console.log('No drafts found');
-      return { msg: 'No drafts found', Error };
+    try {
+      var draftedArticles = await this.prisma.article.findMany({
+        where: { published: false },
+      });
+
+      if (!draftedArticles || !draftedArticles.values) {
+        return new NotFoundException();
+      }
+      console.log('Drafts found');
+      return draftedArticles;
+    } catch (error) {
+      throw new NotFoundException(error.message);
     }
-    console.log('Drafts found');
-    return draftedArticles;
   }
 
   async findOne(id: number) {
     var uniqueId = await this.prisma.article.findUnique({ where: { id } });
 
-    if (uniqueId.id != id) {
-      console.log('Id mismatch');
-      return {error}
+    try {
+      if (!uniqueId) {
+        throw new NotFoundException();
+      }
+
+      return uniqueId;
+    } catch (error) {
+      throw new NotFoundException(error.message);
     }
-
-    return uniqueId;
   }
 
-  update(id: number, updateArticleDto: UpdateArticleDto) {
-    return this.prisma.article.update({
-      where: { id },
-      data: updateArticleDto,
-    });
+  async update(id: number, updateArticleDto: UpdateArticleDto) {
+    try {
+      const articlePresent = await this.prisma.article.findUnique({
+        where: { id },
+      });
+
+      const article = await this.prisma.article.update({
+        where: { id },
+        data: updateArticleDto,
+      });
+
+      if (!articlePresent) {
+        throw new NotFoundException();
+      }
+
+      return article;
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 
-  remove(id: number) {
-    return this.prisma.article.delete({ where: { id } });
+  async remove(id: number) {
+    try {
+      const articlePresent = await this.prisma.article.findUnique({
+        where: { id },
+      });
+
+      if (!articlePresent) {
+        throw new NotFoundException();
+      }
+      const article = await this.prisma.article.delete({ where: { id } });
+      return {
+        msg: `The article with title: ${article.title} has been deleted successfully`,
+      };
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 }
