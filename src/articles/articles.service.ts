@@ -19,61 +19,81 @@ export class ArticlesService {
       const articlePresent = await this.prisma.article.findUnique({
         where: { title },
       });
-      if (!articlePresent) {
-        const newArticle = await this.prisma.article.create({
-          data: createArticleDto,
-        });
-        return newArticle;
+
+      if (articlePresent) {
+        throw new BadRequestException(
+          `The article with Title:${title} already exists`,
+        );
       }
-      throw new BadRequestException();
+      const newArticle = await this.prisma.article.create({
+        data: createArticleDto,
+      });
+      return newArticle;
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw error;
+    }
+  }
+
+  async getAll() {
+    try {
+      const articles = await this.prisma.article.findMany();
+      if (!articles || articles.length === 0) {
+        throw new NotFoundException('No articles found');
+      }
+      console.log('Articles found');
+      return articles;
+    } catch (error) {
+      throw error;
     }
   }
 
   async findPublished() {
     try {
-      var publishedArticles = await this.prisma.article.findMany({
+      const publishedArticles = await this.prisma.article.findMany({
         where: { published: true },
       });
-      if (!publishedArticles) {
-        throw new NotFoundException();
+
+      if (!publishedArticles || publishedArticles.length === 0) {
+        throw new NotFoundException('No Published articles found');
       }
       console.log('Articles found');
       return publishedArticles;
     } catch (error) {
-      // console.log(error);
-      throw new NotFoundException(error.message);
+      throw error;
     }
   }
 
   async findDrafts() {
     try {
-      var draftedArticles = await this.prisma.article.findMany({
+      const draftedArticles = await this.prisma.article.findMany({
         where: { published: false },
       });
 
-      if (!draftedArticles || !draftedArticles.values) {
-        return new NotFoundException();
+      if (!draftedArticles || draftedArticles.length === 0) {
+        return new NotFoundException('No drafts found');
       }
       console.log('Drafts found');
       return draftedArticles;
     } catch (error) {
-      throw new NotFoundException(error.message);
+      throw error;
     }
   }
 
   async findOne(id: number) {
-    var uniqueId = await this.prisma.article.findUnique({ where: { id } });
-
     try {
+      const uniqueId = await this.prisma.article.findUnique({ where: { id } });
+
       if (!uniqueId) {
-        throw new NotFoundException();
+        throw new NotFoundException(`The article with id:${id} does not exist`);
+      } else if (typeof id !== 'number') {
+        throw new BadRequestException(
+          `The id:${id} is supposed to be a number`,
+        );
       }
 
       return uniqueId;
     } catch (error) {
-      throw new NotFoundException(error.message);
+      throw error;
     }
   }
 
@@ -83,18 +103,21 @@ export class ArticlesService {
         where: { id },
       });
 
+      if (!articlePresent) {
+        throw new NotFoundException(`The article with id:${id} was not found`);
+      } else if (typeof id !== 'number') {
+        throw new BadRequestException(
+          `The id:${id} is supposed to be a number`,
+        );
+      }
       const article = await this.prisma.article.update({
         where: { id },
         data: updateArticleDto,
       });
 
-      if (!articlePresent) {
-        throw new NotFoundException();
-      }
-
       return article;
     } catch (error) {
-      throw new NotFoundException(error.message);
+      throw error;
     }
   }
 
@@ -105,14 +128,37 @@ export class ArticlesService {
       });
 
       if (!articlePresent) {
-        throw new NotFoundException();
+        throw new NotFoundException(`The article with id:${id} does not exist`);
+      } else if (typeof id !== 'number') {
+        throw new BadRequestException(
+          `The id:${id} is supposed to be a number`,
+        );
       }
       const article = await this.prisma.article.delete({ where: { id } });
+
       return {
         msg: `The article with title: ${article.title} has been deleted successfully`,
       };
     } catch (error) {
-      throw new NotFoundException(error.message);
+      throw error;
+    }
+  }
+
+  async removeAll() {
+    try {
+      const articlePresent = await this.prisma.article.findMany();
+
+      if (!articlePresent || articlePresent.length === 0) {
+        throw new NotFoundException('No articles found');
+      }
+
+      await this.prisma.article.deleteMany();
+
+      return {
+        msg: `All articles have been deleted successfully`,
+      };
+    } catch (error) {
+      throw error;
     }
   }
 }
