@@ -1,14 +1,11 @@
 import {
   BadRequestException,
-  HttpCode,
-  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { isEmpty } from 'rxjs';
 
 @Injectable()
 export class ArticlesService {
@@ -28,6 +25,11 @@ export class ArticlesService {
       const newArticle = await this.prisma.article.create({
         data: createArticleDto,
       });
+      // if (typeof createArticleDto.title !== 'string') {
+      //   return new BadRequestException('Request body cannot be empty');
+      // }
+      console.log();
+      
       return newArticle;
     } catch (error) {
       throw error;
