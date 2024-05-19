@@ -139,7 +139,7 @@ export class ArticlesService {
       const article = await this.prisma.article.delete({ where: { id } });
 
       return {
-        msg: `The article with title: ${article.title} has been deleted successfully`,
+        msg: `The article with title: {${article.title}} has been deleted successfully`,
       };
     } catch (error) {
       throw error;

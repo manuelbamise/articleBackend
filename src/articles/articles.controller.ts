@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, BadRequestException } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -12,7 +12,11 @@ export class ArticlesController {
 
   @Post('create')
   //@ApiCreatedResponse({type: ArticleEntity})
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   create(@Body() createArticleDto: CreateArticleDto,@Body('title') title:string) {
+    if (!createArticleDto) {
+      throw new BadRequestException('No body attached to the request');
+    }
     return this.articlesService.create(createArticleDto, title);
   }
 
