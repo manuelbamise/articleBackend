@@ -47,6 +47,7 @@ export class ArticlesController {
 
   @Patch('update/:id')
  // @ApiOkResponse({type:ArticleEntity})
+ @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   update(@Param('id') id: number, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articlesService.update(+id, updateArticleDto);
   }
