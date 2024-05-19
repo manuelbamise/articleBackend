@@ -22,3 +22,10 @@ model Article {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
 }
+
+model Sequence {
+  modelName String   @id
+  nextId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}

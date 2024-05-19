@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +12,23 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ArticlesService {
   constructor(private prisma: PrismaService) {}
 
+  async reassignId() {
+    return this.prisma.$transaction(async (prisma) => {
+      const users = await prisma.article.findMany({
+        orderBy: { id: 'asc' },
+      });
+
+      const updates = users.map((user, index) => {
+        return prisma.article.update({
+          where: { id: user.id },
+          data: { id: index + 1 },
+        });
+      });
+
+      await this.prisma.$transaction(updates);
+    });
+  }
+
   async create(createArticleDto: CreateArticleDto, title: string) {
     try {
       const articlePresent = await this.prisma.article.findUnique({
@@ -18,19 +36,17 @@ export class ArticlesService {
       });
 
       if (articlePresent) {
-        throw new BadRequestException(
+        throw new ConflictException(
           `The article with Title:${title} already exists`,
         );
       }
-      const newArticle = await this.prisma.article.create({
+
+      const article = await this.prisma.article.create({
         data: createArticleDto,
       });
-      // if (typeof createArticleDto.title !== 'string') {
-      //   return new BadRequestException('Request body cannot be empty');
-      // }
-      console.log();
-      
-      return newArticle;
+
+      await this.reassignId();
+      return article;
     } catch (error) {
       throw error;
     }
@@ -43,6 +59,7 @@ export class ArticlesService {
         throw new NotFoundException('No articles found');
       }
       console.log('Articles found');
+      await this.reassignId();
       return articles;
     } catch (error) {
       throw error;
